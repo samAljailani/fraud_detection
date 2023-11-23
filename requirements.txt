@@ -1,0 +1,7 @@
+tensorflow>=2.0,<3.0
+notebook
+scikit-learn
+pandas
+matplotlib
+numpy
+pandoc
