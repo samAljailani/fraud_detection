@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-df = pd.read_csv('/Users/natek/Downloads/card_transdata.csv')
+df = pd.read_csv('./data/card_transdata.csv')
 from scikeras.wrappers import KerasClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import SGDClassifier
@@ -52,36 +52,38 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import Adam
-def build_model(neurons, dropout_rate, activation, optimizerC):
+def build_model(neurons, dropout_rate, activation, learning_rate):
     model = Sequential()
     
-    model.add(Dense(units=neurons[0], input_shape=(7,), activation=activation[0]))
-    model.add(Dropout(dropout_rate[0]))
-    model.add(Dense(units=neurons[1], activation=activation[0]))
-    model.add(Dropout(dropout_rate[0]))
-    model.add(Dense(units=neurons[2], activation=activation[0]))
+    model.add(Dense(units=neurons[0], input_shape=(7,), activation=activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(units=neurons[1], activation=activation))
+    model.add(Dropout(dropout_rate))
+    model.add(Dense(units=neurons[2], activation=activation))
 
     #output layer
     model.add(Dense(1, activation="sigmoid"))
-    model.compile(loss='binary_crossentropy', optimizer=optimizerC[0], metrics=['accuracy', ''])
+    model.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate=learning_rate), metrics=['accuracy'])
     return model
 
 params = {
     'neurons': [[512, 256, 128]],
     'dropout_rate': [0.4],
     'activation': ['relu'],
-    'optimizer': [Adam(lr=0.001), Adam(lr=0.0001)]
+    'learning_rate': [0.01, 0.001, 0.0001]
 }
 
 
 
-model = KerasClassifier(build_fn=build_model, activation = params['activation'],optimizerC=params['optimizer'],dropout_rate=params['dropout_rate'], neurons = params['neurons'],verbose = 0)
+model = KerasClassifier(build_fn=build_model, activation = None, neurons = None ,dropout_rate=None, learning_rate = None ,verbose = 1)
 
 search=GridSearchCV(model, params, scoring='accuracy')
-#early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
 #history = model.fit(X_train, y_train, batch_size=32, epochs=10, validation_split=0.2, verbose=2, callbacks=[early_stopping])
 #model.save('my_model.h5')
-res = search.fit(X_train, y_train)
+
+
+res = search.fit(X_train, y_train, epochs = 10, callbacks = [EarlyStopping])
 
 train_loss, train_acc = model.evaluate(X_train, y_train, verbose=0)
 test_loss, test_acc = model.evaluate(X_test, y_test, verbose=0)
